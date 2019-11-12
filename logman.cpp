@@ -113,7 +113,8 @@ class Logger
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
 	std::vector<int> id_to_index; // stores where an entryId can be found in master
-	std::unordered_map < std::string, std::vector<Entry*>> cats;
+	std::unordered_map < std::string, std::vector<Entry*>> cats; // unordered map of categories to entries
+	std::unordered_map<std::string, std::vector<Entry*>> keywords;
 public:
 	
 	/*
@@ -177,6 +178,29 @@ public:
 			id_to_index[master[i]->id] = i; // index at entryid is i
 		}
 	}
+
+	/**
+	 * Iterates through sorted master, parses categories and messages, and adds entry to vector
+	 */
+	// TODO
+	void create_maps()
+	{
+		for(int i = 0; i < int(master.size()); ++i)
+		{
+			Entry* entry = master[i];
+			// Transform category into lower case, then hash
+			std::string cat = entry->cat;
+			std::transform(cat.begin(), cat.end(), cat.begin(), ::tolower);
+			cats[cat].push_back(entry);
+
+			// TODO
+			// Update map for keywords
+			// Split cat into vector of alphanumeric words, convert to lower case
+			// Split msg into vector of alphanumeric words, convert to lower case
+			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
+		}
+		cout << cats["thread"].size();
+	}
 	
 	/**
 	 * Prints contents of master 
@@ -207,8 +231,9 @@ int main(int argc, char* argv[])
 	Logger log;
 	log.read_cmd(argc, argv);
 	log.read_logfile();
-	log.print_master();
-	//log.test_conversion();
+	//log.print_master();
+	log.test_conversion();
+	log.create_maps();
 
 	return 0;
 }
