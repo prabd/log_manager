@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <algorithm>
+#include <sstream>
 #include <deque>
 #include <string>
 #include <vector>
@@ -37,15 +38,20 @@ struct Entry
 
 
 // Helper function to convert from mm:dd:hh:mm:ss to a value
-uint64_t convert_time(std::string &ts)
+long long int convert_time(std::string &ts)
 {
-	uint64_t time = 0;
-	time += uint64_t(std::stoi(ts.substr(0, 2))) * 100000000;
-	time += uint64_t(std::stoi(ts.substr(3, 2))) * 1000000;
-	time += uint64_t(std::stoi(ts.substr(6, 2))) * 10000;
-	time += uint64_t(std::stoi(ts.substr(9, 2))) * 100;
-	time += uint64_t(std::stoi(ts.substr(12, 2)));
-	return time;
+	std::istringstream input_str(ts);
+	std::string str;
+	for(int i = 0; i < 4; ++i)
+	{
+		std::string s;
+		std::getline(input_str, s, ':');
+		str += s;
+	}
+	std::string s;
+	std::getline(input_str, s);
+	str += s;
+	return std::stoll(str);
 }
 
 /**
@@ -59,6 +65,9 @@ public:
 	}
 };
 
+/**
+ * Custom Less to sort entries
+ */
 class EntryLess
 {
 public:
@@ -95,12 +104,16 @@ public:
 	}
 };
 
+/**
+ * Main structure, used to organize functions
+ */
 class Logger
 {
 	
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
 	std::vector<int> id_to_index; // stores where an entryId can be found in master
+	std::unordered_map < std::string, std::vector<Entry*>> cats;
 public:
 	
 	/*
@@ -125,8 +138,7 @@ public:
 
 	
 	/**
-	 * This function opens the file, processes it, and stores the entries in a vector
-	 * 
+	 * This function opens the file, sorts entries in master, and creates conversion vector
 	 */
 	void read_logfile()
 	{
@@ -146,18 +158,26 @@ public:
 		// Print number of entries read
 		cout << master.size() << " entries read\n";
 
+		sort_master();
+	}
+
+	/**
+	 * This function sorts master and then creates a conversion vector
+	 */
+	void sort_master()
+	{
 		EntryLess comp;
 		// Sort master
 		std::sort(master.begin(), master.end(), comp);
-		
+
 		// Create vector of index conversions from entryID to index in master
 		id_to_index.resize(master.size(), 0);
-		for(int i = 0; i < int(id_to_index.size()); ++i)
+		for (int i = 0; i < int(id_to_index.size()); ++i)
 		{
 			id_to_index[master[i]->id] = i; // index at entryid is i
 		}
 	}
-
+	
 	/**
 	 * Prints contents of master 
 	 */
@@ -165,15 +185,17 @@ public:
 	{
 		for(int i = 0; i < int(master.size()); ++i)
 		{
-			cout << master[i]->id << " " << master[i]->time << " " << master[i]->cat << " " << master[i]->msg << "\n";
+			cout << master[i]->id << " " << master[i]->time << 
+				" " << master[i]->cat << " " << master[i]->msg << "\n";
 		}
 	}
 
 	void test_conversion()
 	{
-		for (int i = 0; i < int(master.size()); ++i)
+		for (int id = 0; id < int(master.size()); ++id)
 		{
-			cout << master[id_to_index[i]]->id << " " << master[id_to_index[i]]->time << " " << master[id_to_index[i]]->cat << " " << master[id_to_index[i]]->msg << "\n";
+			cout << master[id_to_index[id]]->id << " " << master[id_to_index[id]]->time << 
+				" " << master[id_to_index[id]]->cat << " " << master[id_to_index[id]]->msg << "\n";
 		}
 	}
 };
