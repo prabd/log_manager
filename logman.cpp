@@ -2,12 +2,14 @@
 
 
 #include <string.h>
+#include <algorithm>
 #include <deque>
 #include <string>
 #include <vector>
 #include <unordered_map>
 #include <iostream>
 #include <fstream>
+#include <algorithm>
 using std::cin;
 using std::cout;
 
@@ -51,6 +53,7 @@ uint64_t convert_time(std::string &ts)
  */
 class stringPred
 {
+public:
 	bool operator()(const std::string &lhs, const std::string &rhs) {
 		return strcasecmp(lhs.c_str(), rhs.c_str()) == 0;
 	}
@@ -58,6 +61,7 @@ class stringPred
 
 class EntryLess
 {
+public:
 	// Compares by timestamp, category, then ID
 	// Entry is less if timestamp is less, cat is less, entry id is less
 	bool operator()(const Entry* lhs, const Entry* rhs)
@@ -142,7 +146,16 @@ public:
 		// Print number of entries read
 		cout << master.size() << " entries read\n";
 
-		// Update
+		EntryLess comp;
+		// Sort master
+		std::sort(master.begin(), master.end(), comp);
+		
+		// Create vector of index conversions from entryID to index in master
+		id_to_index.resize(master.size(), 0);
+		for(int i = 0; i < int(id_to_index.size()); ++i)
+		{
+			id_to_index[master[i]->id] = i; // index at entryid is i
+		}
 	}
 
 	/**
@@ -155,6 +168,14 @@ public:
 			cout << master[i]->id << " " << master[i]->time << " " << master[i]->cat << " " << master[i]->msg << "\n";
 		}
 	}
+
+	void test_conversion()
+	{
+		for (int i = 0; i < int(master.size()); ++i)
+		{
+			cout << master[id_to_index[i]]->id << " " << master[id_to_index[i]]->time << " " << master[id_to_index[i]]->cat << " " << master[id_to_index[i]]->msg << "\n";
+		}
+	}
 };
 
 int main(int argc, char* argv[])
@@ -165,4 +186,7 @@ int main(int argc, char* argv[])
 	log.read_cmd(argc, argv);
 	log.read_logfile();
 	log.print_master();
+	//log.test_conversion();
+
+	return 0;
 }
