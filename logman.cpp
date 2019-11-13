@@ -316,6 +316,34 @@ public:
 			cout << "% ";
 			cin >> cmd;
 			
+			// Time range search
+			if(cmd == 't')
+			{
+				std::string t1, t2;
+				getline(cin, t1, '|');
+				// Strip leading space from t1
+				t1.erase(0, 1);
+				getline(cin, t2);
+				// Error checking
+				if(t1.length() != 14 || t2.length() != 14)
+				{
+					std::cerr << "Input formatted wrong\n";
+				}
+				else {
+					time_search_range(t1, t2);
+					cout << "Timestamps search: " << recents.size() << " entries found\n";
+				}
+			}
+			
+			// Time search
+			else if(cmd == 'm')
+			{
+				std::string t1;
+				cin >> t1;
+				time_search_range(t1, t1); // use same function as above
+				cout << "Timestamp search: " << recents.size() << " entries found\n";
+			}
+			
 		} while (cmd != 'q');
 	}
 
@@ -333,7 +361,7 @@ public:
 		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
 		auto it2 = std::upper_bound(it1, master.end(), up, e2);
 		recents = std::vector<Entry*>(it1, it2);
-		cout << "Timestamps search: " << recents.size() << " entries found\n";
+		//cout << "Timestamps search: " << recents.size() << " entries found\n";
 	}
 
 
@@ -374,8 +402,8 @@ int main(int argc, char* argv[])
 	//log.test_conversion();
 	log.create_maps();
 	log.read_commands();
-	std::string str1 = "12:15:20:56:53";
-	std::string str2 = "12:15:20:56:54";
+	std::string str1 = "04:25:21:55:36";
+	std::string str2 = "04:25:21:55:36";
 	log.time_search_range(str1, str2);
 	return 0;
 }
