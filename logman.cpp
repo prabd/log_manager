@@ -227,34 +227,47 @@ public:
 	// TODO
 	void create_maps()
 	{
+		// Iterate over entries in master
 		for(int i = 0; i < int(master.size()); ++i)
 		{
-			Entry* entry = master[i];
+			Entry* entry = master[i]; // reference to current entry
 			// Transform category into lower case, then hash
 			std::string cat = entry->cat;
 			// need lowercase for standardized hashing
 			toLower(cat);
-			cats[cat].push_back(entry);
+			cats[cat].push_back(entry); //push as is
 
-			// TODO
 			// Update map for keywords
 			// Split cat into vector of alphanumeric words, convert to lower case
 			std::vector<std::string> cat_split = convert_alnum(cat);
 			// Split msg into vector of alphanumeric words, convert to lower case
 			std::string msg = entry->msg;
 			std::vector<std::string> msg_split = convert_alnum(msg);
-			// Merge vectors by moving cat split to msg split
+			// Merge vectors by moving cat split to msg split (cat should be less than msg)
 			msg_split.reserve(msg_split.size() + cat_split.size()); // reserve
-			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split));
+			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split)); // merge into msg
+			
 			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
-			cout << msg << std::endl;
 			for(int i = 0; i < int(msg_split.size()); ++i)
 			{
-				cout << msg_split[i] << " ";
+				// If key does exist
+				if(keywords.find(msg_split[i]) != keywords.end())
+				{
+					auto vec = (keywords[msg_split[i]]);
+					// If previous element in vector is not equal to current entry
+					if (keywords[msg_split[i]][keywords[msg_split[i]].size() - 1] != entry)
+					{
+						keywords[msg_split[i]].push_back(entry);
+					}
+					// Last entry in vector is same entry, so don't do anything
+				}
+				// Else if key does not exist, simply push back
+				else
+				{
+					keywords[msg_split[i]].push_back(entry);
+				}
 			}
-			cout << std::endl;
 		}
-		cout << cats["thread"].size() << std::endl;
 	}
 	
 	/**
@@ -290,13 +303,6 @@ int main(int argc, char* argv[])
 	//log.test_conversion();
 	log.create_maps();
 
-	std::string str = "load Print-''sTaTe,valid'brEakdOwn ";
-	std::vector<std::string> words = convert_alnum(str);
-	
-	for(int i = 0; i < int(words.size()); ++i)
-	{
-		cout << "Word " << i << ": " << words[i] << "--\n";
-	}
 	
 	return 0;
 }
