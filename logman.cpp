@@ -182,12 +182,17 @@ class Logger
 	
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
-	std::vector<int> id_to_index; // stores where an entryId can be found in master
+	std::vector<int> id_to_index; // stores where an entryID can be found in master
 	std::unordered_map < std::string, std::vector<int>> cats; // unordered map of categories to entries
 	std::unordered_map<std::string, std::vector<int>> keywords;
-	std::deque<int> excerpts;
+	std::deque<int> excerpts; // stores indices to master
 	std::vector<int> recents;
-	
+	std::vector<Entry*>::iterator begin_timestamp;
+	std::vector<Entry*>::iterator end_timestamp;
+	bool was_time = false; // flag to see if previous search was time
+	bool changed_recents = false; // flag to see if recents may have changed
+	bool search_made = false; // flag to see if a search was made
+	bool sorted_excerpts = false; // flag to see if excerpts were sorted already
 public:
 	/**
 	 * Custom Dtor
@@ -336,8 +341,8 @@ public:
 					std::cerr << "Input formatted wrong\n";
 				}
 				else {
-					time_search_range(t1, t2);
-					cout << "Timestamps search: " << recents.size() << " entries found\n";
+					int num = time_search_range(t1, t2);
+					cout << "Timestamps search: " << num << " entries found\n";
 				}
 			}
 			
@@ -346,60 +351,284 @@ public:
 			{
 				std::string t1;
 				cin >> t1;
-				time_search_range(t1, t1); // use same function as above
-				cout << "Timestamp search: " << recents.size() << " entries found\n";
+				int num = time_search_range(t1, t1); // use same function as above
+				cout << "Timestamp search: " << num << " entries found\n";
 			}
-
+			else if(cmd == 'c')
+			{
+				
+			}
+			else if(cmd == 'k')
+			{
+				
+			}
+			else if(cmd == 'a')
+			{
+				int num;
+				cin >> num;
+				append_log_entry(num);
+			}
+			else if(cmd == 'r')
+			{
+				append_search_results();
+			}
+			else if(cmd == 'd')
+			{
+				int num = -1;
+				cin >> num;
+				delete_log_entry(num);
+			}
+			else if(cmd == 'b')
+			{
+				int num = -1;
+				cin >> num;
+				move_to_begin(num);
+			}
+			else if(cmd == 'e')
+			{
+				int num = -1;
+				cin >> num;
+				move_to_end(num);
+			}
+			else if(cmd == 's')
+			{
+				sort_excerpts();
+			}
+			else if(cmd == 'l')
+			{
+				clear_excerpts();
+			}
 			// Print recents
 			else if(cmd == 'g')
 			{
 				print_recents();
 			}
+			else if(cmd == 'p')
+			{
+				print_excerpts();
+			}
+			else if(cmd == '#')
+			{
+				std::string junk;
+				std::getline(cin, junk);
+			}
 		} while (cmd != 'q');
 	}
 
 private:
+	/*
+	 * Helper function to update recents based on previous search
+	 * MODIFIES: recents, changed_recents
+	 */
+	void update_recents()
+	{
+		// If recents may have changed, then update, otherwise do not.
+		if (changed_recents) {
+			if (was_time)
+			{
+				// Update recents
+				int index1 = begin_timestamp - master.begin(); //find index of first match
+				int num_el = end_timestamp - begin_timestamp; // total matches
+
+				changed_recents = false;
+
+				std::vector<int> temp;
+				temp.resize(num_el, 0);
+				std::iota(temp.begin(), temp.end(), index1);
+				recents.swap(temp); // vector swap
+			}
+		}
+	}
 	/** HELPER
 	 * Helper Function uses lower bound and upper bound to generate search results in recent
+	 * sets changed_recents = true
+	 * MODIFIES: search_made, changed_recents, begin/end iterators, was_time
 	 */
-	void time_search_range(std::string &lower, std::string &upper)
-	{
-		recents.clear();
-		
+	int time_search_range(std::string &lower, std::string &upper)
+	{	
 		EntryTimeLessLower e1;
 		EntryTimeLessUpper e2;
 		long long int low = timeToNum(lower);
 		long long int up = timeToNum(upper);
 		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
 		auto it2 = std::upper_bound(it1, master.end(), up, e2);
+
+		// Update previous search stuff
+		changed_recents = true;
+		search_made = true;
+		begin_timestamp = it1;
+		end_timestamp = it2;
+		was_time = true;
+		
+		int num_el = it2 - it1;
+		return num_el;
+	}
 	
-		// Update recents
-		int index1 = it1 - master.begin(); //find index of first match
-		int num_el = it2 - it1; // total matches
-		std::vector<int> temp;
-		temp.resize(num_el, 0);
-		std::iota(temp.begin(), temp.end(), index1);
-		recents.swap(temp); // vector swap
+	/* HELPER
+	 * Helper function for 'a'
+	 * MODIFIES: excerpts, sorted_excerpts
+	 */
+	void append_log_entry(const int a)
+	{
+		// Error check
+		if(a < int(master.size()) && a >= 0){
+			int index = id_to_index[a]; // convert
+			excerpts.push_back(index);
+			cout << "log entry " << a << " appended\n";
+			sorted_excerpts = false;
+		}
+	}
+	
+	/** HELPER
+	* Function appends search results to end of deque, 'r'
+	* MODIFIES: excerpts, sorted_excerpts
+	*/
+	void append_search_results()
+	{
+		// If previous search was made
+		if (search_made) {
+			update_recents();
+			// Error check
+			if (!recents.empty()) {
+				for (const int& entry : recents)
+				{
+					excerpts.push_back(entry);
+				}
+			}
+			sorted_excerpts = false;
+			// Print number of entries
+			cout << recents.size() << " log entries appended\n";
+		}
+		// Else, do nothing
 	}
 
-
+	/** HELPER
+	 * Deletes log entry at position a in excerpts, 'd'
+	 * MODIFIES: excerpts
+	 */
+	void delete_log_entry(const int a)
+	{
+		// DOES NOT MODIFY sorted_excerpts B/C no change in order
+		if(a < int(excerpts.size()) && a >= 0)
+		{
+			auto it = excerpts.begin() + a;
+			excerpts.erase(it);
+		}
+	}
 
 	/** HELPER
-	 * Prints recent search
+	 * Moves log entry at position a to beginning, 'b'
+	 * MODIFIES: excerpts, sorted_excerpts
+	 */
+	void move_to_begin(const int a)
+	{
+		if(a < int(excerpts.size()) && a >= 0)
+		{
+			auto it = excerpts.begin() + a;
+			int val = *it;
+			excerpts.erase(it);
+			excerpts.push_front(val); // push to front
+			sorted_excerpts = false;
+		}
+	}
+	
+	/** HELPER
+	* Moves log entry at position a to end, 'e'
+	* MODIFIES: excerpts, sorted_excerpts
+	*/
+	void move_to_end(const int a)
+	{
+		if (a < int(excerpts.size()) && a >= 0)
+		{
+			auto it = excerpts.begin() + a;
+			int val = *it;
+			excerpts.erase(it);
+			excerpts.push_back(val); // push to end
+			sorted_excerpts = false;
+		}
+	}
+
+	// TODO: OPTIMIZE
+	/** HELPER
+	 * Sorts excerpt list.
+	 * MODIFIES: excerpts, sorted_excerpts
+	 */
+	void sort_excerpts()
+	{
+		
+		if(excerpts.empty())
+		{
+			cout << "excerpt list sorted\n(previously empty)\n";
+		}
+		else {
+			cout << "excerpt list sorted\nprevious ordering:\n";
+			master[excerpts[0]]->print();
+			master[excerpts[excerpts.size() - 1]]->print();
+			
+			// Sorts ascending integers.
+			// Since the integers in excerpts refer to the sorted indices of the master,
+			// we only have to sort the values in excerpts.
+			if (!sorted_excerpts) {
+				std::sort(excerpts.begin(), excerpts.end());
+				sorted_excerpts = true;
+			}
+			
+			cout << "new ordering:\n";
+			master[excerpts[0]]->print();
+			master[excerpts[excerpts.size() - 1]]->print();
+		}
+	}
+
+	/** HELPER
+	 * Clears excerpt list
+	 * MODIFIES: excerpts
+	 */
+	void clear_excerpts()
+	{
+		// If empty
+		if(excerpts.empty())
+		{
+			cout << "excerpt list cleared\n(previously empty)\n";
+		}
+		// If not empty
+		else
+		{
+			cout << "excerpt list cleared\nprevious contents:\n";
+			master[excerpts[0]]->print();
+			master[excerpts[excerpts.size() - 1]]->print();
+			excerpts.clear();
+		}
+	}
+	
+	/** HELPER
+	 * Prints recent search, 'g'
 	 */
 	void print_recents()
 	{
-		for(int& index : recents)
+		update_recents();
+		for(const int& index : recents)
 		{
 			master[index]->print();
 		}
 	}
 
+	/** HELPER
+	 * Prints excerpts, 'p'
+	 * 
+	 */
+	void print_excerpts() const
+	{
+		for(const int& index : excerpts)
+		{
+			master[index]->print();
+		}
+	}
+	
 public:	
 	/** HELPER
 	 * Prints contents of master 
 	 */
-	void print_master()
+	void print_master() const 
 	{
 		for(int i = 0; i < int(master.size()); ++i)
 		{
