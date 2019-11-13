@@ -3,6 +3,7 @@
 
 #include <string.h>
 #include <algorithm>
+#include <numeric>
 #include <sstream>
 #include <deque>
 #include <string>
@@ -180,7 +181,7 @@ class Logger
 	std::unordered_map < std::string, std::vector<Entry*>> cats; // unordered map of categories to entries
 	std::unordered_map<std::string, std::vector<Entry*>> keywords;
 	std::deque<Entry*> excerpts;
-	std::vector<Entry*> recents;
+	std::vector<int> recents;
 	
 public:
 	/**
@@ -360,8 +361,15 @@ public:
 		long long int up = timeToNum(upper);
 		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
 		auto it2 = std::upper_bound(it1, master.end(), up, e2);
-		recents = std::vector<Entry*>(it1, it2);
-		//cout << "Timestamps search: " << recents.size() << " entries found\n";
+	
+		// Now that we have iterators to matches, update recents
+		int index1 = it1 - master.begin(); //find index of first match
+		int num_el = it2 - it1; // total matches
+		std::vector<int> temp;
+		temp.resize(num_el, 0);
+		std::iota(temp.begin(), temp.end(), index1);
+		recents.reserve(num_el); // optimize
+		std::move(std::begin(temp), std::end(temp), std::back_inserter(recents)); // move appender
 	}
 
 
