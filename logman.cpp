@@ -36,6 +36,11 @@ struct Entry
 	// Ctor
 	Entry(const int i,const std::string &ti, const long long int t, const std::string c, const std::string m)
 		: id{ i }, ts{ ti }, time{ t }, cat{ c }, msg{ m } {}
+
+	void print()
+	{
+		cout << id << "|" << ts << "|" << cat << "|" << msg << "\n";
+	}
 };
 
 
@@ -344,7 +349,12 @@ public:
 				time_search_range(t1, t1); // use same function as above
 				cout << "Timestamp search: " << recents.size() << " entries found\n";
 			}
-			
+
+			// Print recents
+			else if(cmd == 'g')
+			{
+				print_recents();
+			}
 		} while (cmd != 'q');
 	}
 
@@ -373,6 +383,16 @@ public:
 
 
 
+	/**
+	 * Prints recent search
+	 */
+	void print_recents()
+	{
+		for(int& index : recents)
+		{
+			master[index]->print();
+		}
+	}
 
 	
 	/**
