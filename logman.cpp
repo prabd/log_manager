@@ -54,10 +54,18 @@ long long int convert_time(std::string &ts)
 	return std::stoll(str);
 }
 
+// Helper function to convert string to lower case
+void toLower(std::string &s)
+{
+	// Transform
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+}
+
 /**
  * Function converts a given string into an alphanumeric string
+ * Returns a vector of split words, transformed to lowercase
  */
-std::vector<std::string> convert_alnum(std::string &s)
+std::vector<std::string> convert_alnum(const std::string &s)
 {
 	std::vector<std::string> vec;
 	std::string word = "";
@@ -69,6 +77,7 @@ std::vector<std::string> convert_alnum(std::string &s)
 			// If word is not empty, append to vec
 			if(word.length() > 0)
 			{
+				toLower(word); // convert to lower case
 				vec.push_back(word);
 			}
 			// Flush word
@@ -219,15 +228,18 @@ public:
 			// Transform category into lower case, then hash
 			std::string cat = entry->cat;
 			// need lowercase for standardized hashing
-			std::transform(cat.begin(), cat.end(), cat.begin(), ::tolower); 
+			toLower(cat);
 			cats[cat].push_back(entry);
 
 			// TODO
 			// Update map for keywords
 			// Split cat into vector of alphanumeric words, convert to lower case
+			std::vector<std::string> cat_split;
 			// Split msg into vector of alphanumeric words, convert to lower case
+			std::string msg = entry->msg;
 			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
 		}
+		cout << cats["thread"].size() << std::endl;
 	}
 	
 	/**
@@ -263,13 +275,13 @@ int main(int argc, char* argv[])
 	log.test_conversion();
 	log.create_maps();
 
-	std::string str = "load print-''state,valid'breakdown ";
+	std::string str = "load Print-''sTaTe,valid'brEakdOwn ";
 	std::vector<std::string> words = convert_alnum(str);
-	/*
+	
 	for(int i = 0; i < int(words.size()); ++i)
 	{
 		cout << "Word " << i << ": " << words[i] << "--\n";
 	}
-	*/
+	
 	return 0;
 }
