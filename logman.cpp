@@ -27,18 +27,19 @@ inline int strcasecmp(const char *s1, const char *s2)
 struct Entry
 {
 	int id;
-	uint64_t time;
+	std::string ts;
+	long long int time;
 	std::string cat;
 	std::string msg;
 
 	// Ctor
-	Entry(const int i, const uint64_t ts, const std::string c, const std::string m)
-	: id{ i }, time{ ts }, cat{ c }, msg{ m } {}
+	Entry(const int i,const std::string &ti, const long long int t, const std::string c, const std::string m)
+		: id{ i }, ts{ ti }, time{ t }, cat{ c }, msg{ m } {}
 };
 
 
 // Helper function to convert from mm:dd:hh:mm:ss to a value
-long long int convert_time(std::string &ts)
+long long int timeToNum(std::string &ts)
 {
 	std::istringstream input_str(ts);
 	std::string str;
@@ -55,10 +56,11 @@ long long int convert_time(std::string &ts)
 }
 
 // Helper function to convert string to lower case
-void toLower(std::string &s)
+std::string toLower(std::string &s)
 {
 	// Transform
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
+	return s;
 }
 
 /**
@@ -96,6 +98,7 @@ std::vector<std::string> convert_alnum(const std::string &s)
 	}
 	return vec;
 }
+
 /**
  * Predicate for case insensitivity
  */
@@ -115,7 +118,7 @@ class EntryLess
 public:
 	// Compares by timestamp, category, then ID
 	// Entry is less if timestamp is less, cat is less, entry id is less
-	bool operator()(const Entry* lhs, const Entry* rhs)
+	bool operator()(const Entry* lhs, const Entry* rhs) const
 	{
 		if(lhs->time < rhs-> time)
 		{
@@ -146,6 +149,25 @@ public:
 	}
 };
 
+/*
+ * Custom less for timestamp searches
+ */
+class EntryTimeLessUpper
+{
+public:
+	bool operator()(long long int val, Entry* rhs) const
+	{
+		return val < rhs->time;
+	}
+};
+class EntryTimeLessLower
+{
+public:
+	bool operator()(Entry* lhs, long long int val) const
+	{
+		return lhs->time < val;
+	}
+};
 /**
  * Main structure, used to organize functions
  */
@@ -157,7 +179,20 @@ class Logger
 	std::vector<int> id_to_index; // stores where an entryId can be found in master
 	std::unordered_map < std::string, std::vector<Entry*>> cats; // unordered map of categories to entries
 	std::unordered_map<std::string, std::vector<Entry*>> keywords;
+	std::deque<Entry*> excerpts;
+	std::vector<Entry*> recents;
+	
 public:
+	/**
+	 * Custom Dtor
+	 */
+	~Logger()
+	{
+		for(auto entry : master)
+		{
+			delete entry;
+		}
+	}
 	
 	/*
 	 * THIS FUNCTION READS COMMAND LINE ARGS
@@ -193,7 +228,7 @@ public:
 		while(getline(input, ts, '|')){
 			std::getline(input, cat, '|');
 			std::getline(input, msg);
-			Entry* en = new Entry(num, convert_time(ts), cat, msg);
+			Entry* en = new Entry(num, ts, timeToNum(ts), cat, msg);
 			master.push_back(en);
 			++num;
 		}
@@ -269,6 +304,41 @@ public:
 			}
 		}
 	}
+
+	/**
+	 * Process user commands and acts accordingly
+	 */
+	void read_commands()
+	{
+		char cmd;
+		do
+		{
+			cout << "% ";
+			cin >> cmd;
+			
+		} while (cmd != 'q');
+	}
+
+	/**
+	 * Function uses lower bound and upper bound to copy elements from master to recent
+	 */
+	void time_search_range(std::string &lower, std::string &upper)
+	{
+		recents.clear();
+		
+		EntryTimeLessLower e1;
+		EntryTimeLessUpper e2;
+		long long int low = timeToNum(lower);
+		long long int up = timeToNum(upper);
+		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
+		auto it2 = std::upper_bound(it1, master.end(), up, e2);
+		recents = std::vector<Entry*>(it1, it2);
+		cout << "Timestamps search: " << recents.size() << " entries found\n";
+	}
+
+
+
+
 	
 	/**
 	 * Prints contents of master 
@@ -277,16 +347,17 @@ public:
 	{
 		for(int i = 0; i < int(master.size()); ++i)
 		{
-			cout << master[i]->id << " " << master[i]->time << 
+			cout << master[i]->id << " " << master[i]->ts << 
 				" " << master[i]->cat << " " << master[i]->msg << "\n";
 		}
 	}
-
+	
+	// Debugging helper
 	void test_conversion()
 	{
 		for (int id = 0; id < int(master.size()); ++id)
 		{
-			cout << master[id_to_index[id]]->id << " " << master[id_to_index[id]]->time << 
+			cout << master[id_to_index[id]]->id << " " << master[id_to_index[id]]->ts << 
 				" " << master[id_to_index[id]]->cat << " " << master[id_to_index[id]]->msg << "\n";
 		}
 	}
@@ -302,7 +373,9 @@ int main(int argc, char* argv[])
 	log.print_master();
 	//log.test_conversion();
 	log.create_maps();
-
-	
+	log.read_commands();
+	std::string str1 = "12:15:20:56:53";
+	std::string str2 = "12:15:20:56:54";
+	log.time_search_range(str1, str2);
 	return 0;
 }
