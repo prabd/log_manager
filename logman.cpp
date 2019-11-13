@@ -89,6 +89,11 @@ std::vector<std::string> convert_alnum(const std::string &s)
 			word += s[i];
 		}
 	}
+	// append last word if it exists
+	if(word != "")
+	{
+		vec.push_back(word);
+	}
 	return vec;
 }
 /**
@@ -234,10 +239,20 @@ public:
 			// TODO
 			// Update map for keywords
 			// Split cat into vector of alphanumeric words, convert to lower case
-			std::vector<std::string> cat_split;
+			std::vector<std::string> cat_split = convert_alnum(cat);
 			// Split msg into vector of alphanumeric words, convert to lower case
 			std::string msg = entry->msg;
+			std::vector<std::string> msg_split = convert_alnum(msg);
+			// Merge vectors by moving cat split to msg split
+			msg_split.reserve(msg_split.size() + cat_split.size()); // reserve
+			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split));
 			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
+			cout << msg << std::endl;
+			for(int i = 0; i < int(msg_split.size()); ++i)
+			{
+				cout << msg_split[i] << " ";
+			}
+			cout << std::endl;
 		}
 		cout << cats["thread"].size() << std::endl;
 	}
@@ -271,8 +286,8 @@ int main(int argc, char* argv[])
 	Logger log;
 	log.read_cmd(argc, argv);
 	log.read_logfile();
-	//log.print_master();
-	log.test_conversion();
+	log.print_master();
+	//log.test_conversion();
 	log.create_maps();
 
 	std::string str = "load Print-''sTaTe,valid'brEakdOwn ";
