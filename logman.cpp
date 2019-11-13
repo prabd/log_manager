@@ -368,8 +368,7 @@ public:
 		std::vector<int> temp;
 		temp.resize(num_el, 0);
 		std::iota(temp.begin(), temp.end(), index1);
-		recents.reserve(num_el); // optimize
-		std::move(std::begin(temp), std::end(temp), std::back_inserter(recents)); // move appender
+		recents.swap(temp); // vector swap
 	}
 
 
@@ -410,8 +409,5 @@ int main(int argc, char* argv[])
 	//log.test_conversion();
 	log.create_maps();
 	log.read_commands();
-	std::string str1 = "04:25:21:55:36";
-	std::string str2 = "04:25:21:55:36";
-	log.time_search_range(str1, str2);
 	return 0;
 }
