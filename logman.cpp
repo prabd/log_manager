@@ -55,6 +55,34 @@ long long int convert_time(std::string &ts)
 }
 
 /**
+ * Function converts a given string into an alphanumeric string
+ */
+std::vector<std::string> convert_alnum(std::string &s)
+{
+	std::vector<std::string> vec;
+	std::string word = "";
+	for(int i = 0; i < int(s.length()); ++i)
+	{
+		// If not alphanumeric
+		if(!isalnum(s[i]))
+		{
+			// If word is not empty, append to vec
+			if(word.length() > 0)
+			{
+				vec.push_back(word);
+			}
+			// Flush word
+			word = "";
+		}
+		// If alphanumeric, append character to word
+		else
+		{
+			word += s[i];
+		}
+	}
+	return vec;
+}
+/**
  * Predicate for case insensitivity
  */
 class stringPred
@@ -190,7 +218,8 @@ public:
 			Entry* entry = master[i];
 			// Transform category into lower case, then hash
 			std::string cat = entry->cat;
-			std::transform(cat.begin(), cat.end(), cat.begin(), ::tolower);
+			// need lowercase for standardized hashing
+			std::transform(cat.begin(), cat.end(), cat.begin(), ::tolower); 
 			cats[cat].push_back(entry);
 
 			// TODO
@@ -199,7 +228,6 @@ public:
 			// Split msg into vector of alphanumeric words, convert to lower case
 			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
 		}
-		cout << cats["thread"].size();
 	}
 	
 	/**
@@ -235,5 +263,13 @@ int main(int argc, char* argv[])
 	log.test_conversion();
 	log.create_maps();
 
+	std::string str = "load print-''state,valid'breakdown ";
+	std::vector<std::string> words = convert_alnum(str);
+	/*
+	for(int i = 0; i < int(words.size()); ++i)
+	{
+		cout << "Word " << i << ": " << words[i] << "--\n";
+	}
+	*/
 	return 0;
 }
