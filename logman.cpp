@@ -68,11 +68,11 @@ void toLower(std::string &s)
 std::vector<std::string> convert_alnum(const std::string &s)
 {
 	std::vector<std::string> vec;
-	std::string word = "";
-	for(int i = 0; i < int(s.length()); ++i)
+	std::string word;
+	for(char c : s)
 	{
 		// If not alphanumeric
-		if(!isalnum(s[i]))
+		if(!isalnum(c))
 		{
 			// If word is not empty, append to vec
 			if(word.length() > 0)
@@ -81,16 +81,16 @@ std::vector<std::string> convert_alnum(const std::string &s)
 				vec.push_back(word);
 			}
 			// Flush word
-			word = "";
+			word.clear();
 		}
 		// If alphanumeric, append character to word
 		else
 		{
-			word += s[i];
+			word += c;
 		}
 	}
 	// append last word if it exists
-	if(word != "")
+	if(!word.empty())
 	{
 		vec.push_back(word);
 	}
@@ -102,7 +102,7 @@ std::vector<std::string> convert_alnum(const std::string &s)
 class stringPred
 {
 public:
-	bool operator()(const std::string &lhs, const std::string &rhs) {
+	bool operator()(const std::string &lhs, const std::string &rhs) const {
 		return strcasecmp(lhs.c_str(), rhs.c_str()) == 0;
 	}
 };
@@ -222,9 +222,9 @@ public:
 	}
 
 	/**
-	 * Iterates through sorted master, parses categories and messages, and adds entry to vector
+	 * Iterates through sorted master, parses categories and messages
+	 * Hashes maps
 	 */
-	// TODO
 	void create_maps()
 	{
 		// Iterate over entries in master
@@ -248,23 +248,23 @@ public:
 			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split)); // merge into msg
 			
 			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
-			for(int i = 0; i < int(msg_split.size()); ++i)
+			for(const auto& word : msg_split)
 			{
 				// If key does exist
-				if(keywords.find(msg_split[i]) != keywords.end())
+				if(keywords.find(word) != keywords.end())
 				{
-					auto vec = (keywords[msg_split[i]]);
+					auto vec = (keywords[word]);
 					// If previous element in vector is not equal to current entry
-					if (keywords[msg_split[i]][keywords[msg_split[i]].size() - 1] != entry)
+					if (keywords[word][keywords[word].size() - 1] != entry)
 					{
-						keywords[msg_split[i]].push_back(entry);
+						keywords[word].push_back(entry);
 					}
 					// Last entry in vector is same entry, so don't do anything
 				}
 				// Else if key does not exist, simply push back
 				else
 				{
-					keywords[msg_split[i]].push_back(entry);
+					keywords[word].push_back(entry);
 				}
 			}
 		}
