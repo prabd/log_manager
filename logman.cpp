@@ -183,9 +183,9 @@ class Logger
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
 	std::vector<int> id_to_index; // stores where an entryId can be found in master
-	std::unordered_map < std::string, std::vector<Entry*>> cats; // unordered map of categories to entries
-	std::unordered_map<std::string, std::vector<Entry*>> keywords;
-	std::deque<Entry*> excerpts;
+	std::unordered_map < std::string, std::vector<int>> cats; // unordered map of categories to entries
+	std::unordered_map<std::string, std::vector<int>> keywords;
+	std::deque<int> excerpts;
 	std::vector<int> recents;
 	
 public:
@@ -200,7 +200,7 @@ public:
 		}
 	}
 	
-	/*
+	/* SETUP
 	 * THIS FUNCTION READS COMMAND LINE ARGS
 	 */
 	void read_cmd(int argc, char* argv[])
@@ -221,7 +221,7 @@ public:
 	} //read_cmd
 
 	
-	/**
+	/** SETUP
 	 * This function opens the file, sorts entries in master, and creates conversion vector
 	 */
 	void read_logfile()
@@ -245,7 +245,7 @@ public:
 		sort_master();
 	}
 
-	/**
+	/** SETUP
 	 * This function sorts master and then creates a conversion vector
 	 */
 	void sort_master()
@@ -262,7 +262,7 @@ public:
 		}
 	}
 
-	/**
+	/** SETUP
 	 * Iterates through sorted master, parses categories and messages
 	 * Hashes maps
 	 */
@@ -276,7 +276,7 @@ public:
 			std::string cat = entry->cat;
 			// need lowercase for standardized hashing
 			toLower(cat);
-			cats[cat].push_back(entry); //push as is
+			cats[cat].push_back(i); //push as is
 
 			// Update map for keywords
 			// Split cat into vector of alphanumeric words, convert to lower case
@@ -296,22 +296,22 @@ public:
 				{
 					auto vec = (keywords[word]);
 					// If previous element in vector is not equal to current entry
-					if (keywords[word][keywords[word].size() - 1] != entry)
+					if (keywords[word][keywords[word].size() - 1] != i)
 					{
-						keywords[word].push_back(entry);
+						keywords[word].push_back(i);
 					}
 					// Last entry in vector is same entry, so don't do anything
 				}
 				// Else if key does not exist, simply push back
 				else
 				{
-					keywords[word].push_back(entry);
+					keywords[word].push_back(i);
 				}
 			}
 		}
 	}
 
-	/**
+	/** MAIN
 	 * Process user commands and acts accordingly
 	 */
 	void read_commands()
@@ -358,8 +358,9 @@ public:
 		} while (cmd != 'q');
 	}
 
-	/**
-	 * Function uses lower bound and upper bound to copy elements from master to recent
+private:
+	/** HELPER
+	 * Helper Function uses lower bound and upper bound to generate search results in recent
 	 */
 	void time_search_range(std::string &lower, std::string &upper)
 	{
@@ -372,7 +373,7 @@ public:
 		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
 		auto it2 = std::upper_bound(it1, master.end(), up, e2);
 	
-		// Now that we have iterators to matches, update recents
+		// Update recents
 		int index1 = it1 - master.begin(); //find index of first match
 		int num_el = it2 - it1; // total matches
 		std::vector<int> temp;
@@ -383,7 +384,7 @@ public:
 
 
 
-	/**
+	/** HELPER
 	 * Prints recent search
 	 */
 	void print_recents()
@@ -394,8 +395,8 @@ public:
 		}
 	}
 
-	
-	/**
+public:	
+	/** HELPER
 	 * Prints contents of master 
 	 */
 	void print_master()
@@ -407,7 +408,7 @@ public:
 		}
 	}
 	
-	// Debugging helper
+	// HELPER
 	void test_conversion()
 	{
 		for (int id = 0; id < int(master.size()); ++id)
