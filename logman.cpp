@@ -411,6 +411,7 @@ public:
 			{
 				std::string junk;
 				std::getline(cin, junk);
+				cout << "\n";
 			}
 		} while (cmd != 'q');
 	}
@@ -513,6 +514,7 @@ private:
 		{
 			auto it = excerpts.begin() + a;
 			excerpts.erase(it);
+			cout << "Deleted excerpt list entry " << a << "\n";
 		}
 	}
 
@@ -559,10 +561,12 @@ private:
 		if(excerpts.empty())
 		{
 			cout << "excerpt list sorted\n(previously empty)\n";
+			sorted_excerpts = true;
 		}
 		else {
 			cout << "excerpt list sorted\nprevious ordering:\n";
 			master[excerpts[0]]->print();
+			cout << "...\n";
 			master[excerpts[excerpts.size() - 1]]->print();
 			
 			// Sorts ascending integers.
@@ -575,6 +579,7 @@ private:
 			
 			cout << "new ordering:\n";
 			master[excerpts[0]]->print();
+			cout << "...\n";
 			master[excerpts[excerpts.size() - 1]]->print();
 		}
 	}
@@ -595,6 +600,7 @@ private:
 		{
 			cout << "excerpt list cleared\nprevious contents:\n";
 			master[excerpts[0]]->print();
+			cout << "...\n";
 			master[excerpts[excerpts.size() - 1]]->print();
 			excerpts.clear();
 		}
@@ -655,7 +661,7 @@ int main(int argc, char* argv[])
 	Logger log;
 	log.read_cmd(argc, argv);
 	log.read_logfile();
-	log.print_master();
+	//log.print_master();
 	//log.test_conversion();
 	log.create_maps();
 	log.read_commands();

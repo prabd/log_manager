@@ -1,0 +1,55 @@
+# Tests Excerpt append entry, append search results, sort.
+# n
+# n
+# Check empty sort
+s
+# check empty clear statement
+c
+# check non-empty clear
+a 0
+c
+# check out of bounds entry append
+a 18
+# check successful append
+a 10
+p
+# test no previous search result append
+r
+# Search for non existent time
+m 04:25:21:55:51
+# test empty result append
+r
+# Search for existing time
+m 04:25:21:55:36
+g
+# test non-empty result append
+r
+p
+# Move first to beginning
+b 0
+p
+# Move second to beginning
+b 1
+p
+# Move last to beginning
+b 3
+p
+# Move invalid index to beginning
+b 4
+b 0 
+p
+# sort non-empty
+s
+s
+# delete entry at position 0
+d 0
+p
+# delete invalid index
+d 3
+# delete last index
+d 2
+p
+# test clear
+l
+p
+q
