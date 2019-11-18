@@ -655,8 +655,9 @@ private:
 	 * 
 	 */
 	void print_excerpts() const {
-		for(const unsigned int& index : excerpts) {
-			master[index]->print();
+		for (int index = 0; index < int(excerpts.size()); ++index) {
+			cout << index << "|";
+			master[excerpts[index]]->print();
 		}
 	}
 	
