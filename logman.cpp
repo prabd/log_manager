@@ -62,7 +62,7 @@ long long int timeToNum(std::string &ts)
 void toLower(std::string &s)
 {
 	// Transform
-	std::transform(s.begin(), s.end(), s.begin(), std::tolower);
+	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
 
 /**
@@ -95,6 +95,7 @@ void convert_alnum(const std::string &s, std::vector<std::string> &vec)
 	// append last word if it exists
 	if(!word.empty())
 	{
+		toLower(word);
 		vec.push_back(word);
 	}
 }
@@ -186,11 +187,12 @@ class Logger
 	std::vector<Entry*>::iterator end_time_it;
 	std::vector<unsigned int>::iterator begin_cat_it;
 	std::vector<unsigned int>::iterator end_cat_it;
-	std::vector<unsigned int> key_search;
+	std::vector<unsigned int> key_search_vec;
 	char search_type = '0';
 	bool changed_recents = false; // flag to see if recents may have changed
 	bool sorted_excerpts = false; // flag to see if excerpts were sorted already
 	bool clear_recents = false; // Flag to clear recents
+	std::string prev_key_search;
 public:
 	/**
 	 * Custom Dtor, prevent memory leaks
@@ -301,7 +303,7 @@ public:
 				{
 					auto vec = (keywords[word]);
 					// If previous element in vector is not equal to current entry
-					if (keywords[word][keywords[word].size() - 1] != i)
+					if (int(keywords[word][keywords[word].size() - 1]) != i)
 					{
 						keywords[word].push_back(i);
 					}
@@ -314,6 +316,7 @@ public:
 				}
 			}
 		}
+		
 	}
 
 	/** MAIN
@@ -336,9 +339,15 @@ public:
 				t1.erase(0, 1);
 				getline(cin, t2);
 				// Error checking
-				if(t1.length() != 14 || t2.length() != 14)
+				if(t1.length() != 14 || t2.length() != 15)
 				{
+					
 					std::cerr << "Input formatted wrong\n";
+					std::cerr << t1.length() << std::endl;
+					std::cerr << t1 << std::endl;
+					std::cerr << t2.length() << std::endl;
+					std::cerr << t2 << std::endl;
+					
 				}
 				else {
 					int num = time_search_range(t1, t2);
@@ -366,7 +375,9 @@ public:
 			}
 			else if(cmd == 'k')
 			{
-				
+				std::string str;
+				std::getline(cin, str);
+				keyword_search(str);
 			}
 			else if(cmd == 'a')
 			{
@@ -402,9 +413,24 @@ public:
 			}
 			else if(cmd == 'l')
 			{
-				clear_excerpts();
+				//clear_excerpts();
+						// If empty
+				if (excerpts.empty()) {
+					cout << "excerpt list cleared\n(previously empty)\n";
+				}
+				// If not empty
+				else {
+					cout << "excerpt list cleared\nprevious contents:\n";
+					cout << '0' << "|";
+					master[excerpts[0]]->print();
+
+					cout << "...\n";
+
+					cout << excerpts.size() - 1 << '|';
+					master[excerpts[excerpts.size() - 1]]->print();
+					excerpts.resize(0);
+				}
 			}
-			// Print recents
 			else if(cmd == 'g')
 			{
 				print_recents();
@@ -436,8 +462,8 @@ private:
 		else if (changed_recents) {
 			if (search_type == 't') {
 				// Update recents
-				unsigned int index1 = begin_time_it - master.begin(); //find index of first match
-				unsigned int num_el = end_time_it - begin_time_it; // total matches
+				unsigned int index1 = unsigned(begin_time_it - master.begin()); //find index of first match
+				unsigned int num_el = unsigned(end_time_it - begin_time_it); // total matches
 
 				changed_recents = false;
 
@@ -448,10 +474,14 @@ private:
 			}
 			// was a category or keyword search
 			else if (search_type == 'c') {
-				unsigned int num_el = end_cat_it - begin_cat_it;
+				unsigned int num_el = unsigned(end_cat_it - begin_cat_it);
 				changed_recents = false;
 				recents.resize(num_el, 0);
 				std::copy(begin_cat_it, end_cat_it, recents.begin());
+			}
+			else if (search_type == 'k') {
+				changed_recents = false;
+				recents.swap(key_search_vec);
 			}
 		}
 	}
@@ -473,8 +503,7 @@ private:
 		begin_time_it = it1;
 		end_time_it = it2;
 		
-		
-		int num_el = it2 - it1;
+		int num_el = int(it2 - it1);
 		return num_el;
 	}
 
@@ -494,7 +523,7 @@ private:
 		if (cats.find(converted) != cats.end()) {
 			begin_cat_it = cats[converted].begin();
 			end_cat_it = cats[converted].end();
-			num_el = end_cat_it - begin_cat_it;
+			num_el = int(end_cat_it - begin_cat_it);
 			clear_recents = false;
 		}
 		else {
@@ -507,7 +536,48 @@ private:
 	 * Function for keywords search, 'k'
 	 */
 	void keyword_search(const std::string &words) {
+		// If previous search was exact same, return
+		if(prev_key_search == words && search_type == 'k') {
+			changed_recents = false;
+			clear_recents = false;
+		}
 		
+		search_type = 'k';
+		clear_recents = false;
+		changed_recents = true;
+		
+		// Get vector of words
+		std::vector<std::string> word_vec;
+		convert_alnum(words, word_vec);
+
+		// Start results with first word
+		// If first word isn't found, just clear key_search_vec
+		if(keywords.find(word_vec[0]) == keywords.end()) {
+			key_search_vec.clear();
+		}
+		else {
+			std::vector<unsigned int> result = keywords[word_vec[0]];
+			// Loop through all words starting at index 1, and perform set intersection
+			for(int i = 1; i < int(word_vec.size()); ++i) {
+				// If result vector is empty, or current word is not found, clear result, and break
+				if(result.empty() || (keywords.find(word_vec[i]) == keywords.end())) {
+					result.clear();
+					break;
+				}
+				// Else word is found and result is non empty
+				else {
+					// Get vec of word, then perform union with result
+					auto it1 = keywords[word_vec[i]].begin();
+					auto it2 = keywords[word_vec[i]].end();
+					std::vector<unsigned int> temp;
+					// Write to temp
+					std::set_intersection(result.begin(), result.end(), it1, it2, std::back_inserter(temp));
+					result.swap(temp); // swap with temp
+				}
+			}
+			key_search_vec.swap(result); // swap with main vec
+		}
+		cout << "Keyword search: " << key_search_vec.size() << " entries found\n";
 	}
 
 	
@@ -602,8 +672,12 @@ private:
 		}
 		else {
 			cout << "excerpt list sorted\nprevious ordering:\n";
+			cout << '0' << "|";
 			master[excerpts[0]]->print();
+			
 			cout << "...\n";
+
+			cout << excerpts.size() - 1 << "|";
 			master[excerpts[excerpts.size() - 1]]->print();
 			
 			// Sorts ascending integers.
@@ -615,8 +689,12 @@ private:
 			}
 			
 			cout << "new ordering:\n";
+			cout << '0' << "|";
 			master[excerpts[0]]->print();
+			
 			cout << "...\n";
+
+			cout << excerpts.size() - 1 << "|";
 			master[excerpts[excerpts.size() - 1]]->print();
 		}
 	}
@@ -633,11 +711,16 @@ private:
 		// If not empty
 		else {
 			cout << "excerpt list cleared\nprevious contents:\n";
+			cout << '0' << "|";
 			master[excerpts[0]]->print();
+	
 			cout << "...\n";
+
+			cout << excerpts.size() - 1;
 			master[excerpts[excerpts.size() - 1]]->print();
-			excerpts.clear();
+			excerpts.resize(0);
 		}
+		
 	}
 	
 	/** HELPER
