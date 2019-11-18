@@ -69,9 +69,8 @@ void toLower(std::string &s)
  * Function converts a given string into an alphanumeric string
  * Returns a vector of split words, transformed to lowercase
  */
-std::vector<std::string> convert_alnum(const std::string &s)
+void convert_alnum(const std::string &s, std::vector<std::string> &vec)
 {
-	std::vector<std::string> vec;
 	std::string word;
 	for(char c : s)
 	{
@@ -98,7 +97,6 @@ std::vector<std::string> convert_alnum(const std::string &s)
 	{
 		vec.push_back(word);
 	}
-	return vec;
 }
 
 /**
@@ -285,10 +283,12 @@ public:
 
 			// Update map for keywords
 			// Split cat into vector of alphanumeric words, convert to lower case
-			std::vector<std::string> cat_split = convert_alnum(cat);
+			std::vector<std::string> cat_split;
+			convert_alnum(cat, cat_split);
 			// Split msg into vector of alphanumeric words, convert to lower case
 			std::string msg = entry->msg;
-			std::vector<std::string> msg_split = convert_alnum(msg);
+			std::vector<std::string> msg_split;
+			convert_alnum(msg, msg_split);
 			// Merge vectors by moving cat split to msg split (cat should be less than msg)
 			msg_split.reserve(msg_split.size() + cat_split.size()); // reserve
 			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split)); // merge into msg
