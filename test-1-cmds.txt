@@ -52,4 +52,8 @@ p
 # test clear
 l
 p
+# test multiple appends after 1 search
+r
+r
+p
 q

@@ -16,8 +16,7 @@ using std::cin;
 using std::cout;
 
 #ifdef _MSC_VER
-inline int strcasecmp(const char *s1, const char *s2)
-{
+inline int strcasecmp(const char *s1, const char *s2) {
 	return _stricmp(s1, s2);
 }
 #endif // _MSC_VER
@@ -25,20 +24,18 @@ inline int strcasecmp(const char *s1, const char *s2)
 /**
  * Struct to store entries
  */
-struct Entry
-{
-	int id;
+struct Entry {
+	unsigned int id;
 	std::string ts;
 	long long int time;
 	std::string cat;
 	std::string msg;
 
 	// Ctor
-	Entry(const int i,const std::string &ti, const long long int t, const std::string c, const std::string m)
+	Entry(const unsigned int i,const std::string &ti, const long long int t, const std::string c, const std::string m)
 		: id{ i }, ts{ ti }, time{ t }, cat{ c }, msg{ m } {}
 
-	void print()
-	{
+	void print() {
 		cout << id << "|" << ts << "|" << cat << "|" << msg << "\n";
 	}
 };
@@ -62,11 +59,10 @@ long long int timeToNum(std::string &ts)
 }
 
 // Helper function to convert string to lower case
-std::string toLower(std::string &s)
+void toLower(std::string &s)
 {
 	// Transform
-	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
-	return s;
+	std::transform(s.begin(), s.end(), s.begin(), std::tolower);
 }
 
 /**
@@ -174,6 +170,7 @@ public:
 		return lhs->time < val;
 	}
 };
+
 /**
  * Main structure, used to organize functions
  */
@@ -182,20 +179,23 @@ class Logger
 	
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
-	std::vector<int> id_to_index; // stores where an entryID can be found in master
-	std::unordered_map < std::string, std::vector<int>> cats; // unordered map of categories to entries
-	std::unordered_map<std::string, std::vector<int>> keywords;
-	std::deque<int> excerpts; // stores indices to master
-	std::vector<int> recents;
-	std::vector<Entry*>::iterator begin_timestamp;
-	std::vector<Entry*>::iterator end_timestamp;
-	bool was_time = false; // flag to see if previous search was time
+	std::vector<unsigned int> id_to_index; // stores where an entryID can be found in master
+	std::unordered_map < std::string, std::vector<unsigned int>> cats; // unordered map of categories to entries
+	std::unordered_map<std::string, std::vector<unsigned int>> keywords;
+	std::deque<unsigned int> excerpts; // stores indices to master
+	std::vector<unsigned int> recents;
+	std::vector<Entry*>::iterator begin_time_it;
+	std::vector<Entry*>::iterator end_time_it;
+	std::vector<unsigned int>::iterator begin_cat_it;
+	std::vector<unsigned int>::iterator end_cat_it;
+	std::vector<unsigned int> key_search;
+	char search_type = '0';
 	bool changed_recents = false; // flag to see if recents may have changed
-	bool search_made = false; // flag to see if a search was made
 	bool sorted_excerpts = false; // flag to see if excerpts were sorted already
+	bool clear_recents = false; // Flag to clear recents
 public:
 	/**
-	 * Custom Dtor
+	 * Custom Dtor, prevent memory leaks
 	 */
 	~Logger()
 	{
@@ -356,7 +356,13 @@ public:
 			}
 			else if(cmd == 'c')
 			{
-				
+				std::string str;
+				getline(cin, str);
+
+				// Erase first space
+				str.erase(0, 1);
+	
+				category_search(str);
 			}
 			else if(cmd == 'k')
 			{
@@ -411,7 +417,7 @@ public:
 			{
 				std::string junk;
 				std::getline(cin, junk);
-				cout << "\n";
+
 			}
 		} while (cmd != 'q');
 	}
@@ -423,20 +429,29 @@ private:
 	 */
 	void update_recents()
 	{
+		if(clear_recents) {
+			recents.clear();
+		}
 		// If recents may have changed, then update, otherwise do not.
-		if (changed_recents) {
-			if (was_time)
-			{
+		else if (changed_recents) {
+			if (search_type == 't') {
 				// Update recents
-				int index1 = begin_timestamp - master.begin(); //find index of first match
-				int num_el = end_timestamp - begin_timestamp; // total matches
+				unsigned int index1 = begin_time_it - master.begin(); //find index of first match
+				unsigned int num_el = end_time_it - begin_time_it; // total matches
 
 				changed_recents = false;
 
-				std::vector<int> temp;
+				std::vector<unsigned int> temp;
 				temp.resize(num_el, 0);
 				std::iota(temp.begin(), temp.end(), index1);
 				recents.swap(temp); // vector swap
+			}
+			// was a category or keyword search
+			else if (search_type == 'c') {
+				unsigned int num_el = end_cat_it - begin_cat_it;
+				changed_recents = false;
+				recents.resize(num_el, 0);
+				std::copy(begin_cat_it, end_cat_it, recents.begin());
 			}
 		}
 	}
@@ -445,35 +460,66 @@ private:
 	 * sets changed_recents = true
 	 * MODIFIES: search_made, changed_recents, begin/end iterators, was_time
 	 */
-	int time_search_range(std::string &lower, std::string &upper)
-	{	
-		EntryTimeLessLower e1;
-		EntryTimeLessUpper e2;
+	int time_search_range(std::string &lower, std::string &upper) {	
 		long long int low = timeToNum(lower);
 		long long int up = timeToNum(upper);
-		auto it1 = std::lower_bound(master.begin(), master.end(), low, e1);
-		auto it2 = std::upper_bound(it1, master.end(), up, e2);
+		auto it1 = std::lower_bound(master.begin(), master.end(), low, EntryTimeLessLower());
+		auto it2 = std::upper_bound(it1, master.end(), up, EntryTimeLessUpper());
 
 		// Update previous search stuff
+		search_type = 't';
 		changed_recents = true;
-		search_made = true;
-		begin_timestamp = it1;
-		end_timestamp = it2;
-		was_time = true;
+		clear_recents = false;
+		begin_time_it = it1;
+		end_time_it = it2;
+		
 		
 		int num_el = it2 - it1;
 		return num_el;
 	}
+
+	
+	/** HELPER
+	 *  Function for category search, 'c'
+	 */
+	void category_search(const std::string &cat) {
+		search_type = 'c'; // was not time search
+		changed_recents = true;
+		int num_el = 0;
+		
+		// Convert to lower case for search
+		std::string converted(cat);
+		toLower(converted);
+		// Check if string exist in map
+		if (cats.find(converted) != cats.end()) {
+			begin_cat_it = cats[converted].begin();
+			end_cat_it = cats[converted].end();
+			num_el = end_cat_it - begin_cat_it;
+			clear_recents = false;
+		}
+		else {
+			clear_recents = true;
+		}
+		cout << "Category search: " << num_el << " entries found\n";
+	}
+	
+	/** HELPER
+	 * Function for keywords search, 'k'
+	 */
+	void keyword_search(const std::string &words) {
+		
+	}
+
 	
 	/* HELPER
 	 * Helper function for 'a'
 	 * MODIFIES: excerpts, sorted_excerpts
 	 */
-	void append_log_entry(const int a)
-	{
+	void append_log_entry(const int a) {
+
 		// Error check
 		if(a < int(master.size()) && a >= 0){
-			int index = id_to_index[a]; // convert
+			unsigned int index = id_to_index[a]; // convert
 			excerpts.push_back(index);
 			cout << "log entry " << a << " appended\n";
 			sorted_excerpts = false;
@@ -484,19 +530,17 @@ private:
 	* Function appends search results to end of deque, 'r'
 	* MODIFIES: excerpts, sorted_excerpts
 	*/
-	void append_search_results()
-	{
+	void append_search_results() {
 		// If previous search was made
-		if (search_made) {
+		if (search_type != '0') {
 			update_recents();
 			// Error check
 			if (!recents.empty()) {
-				for (const int& entry : recents)
-				{
+				for (const unsigned int& entry : recents) {
 					excerpts.push_back(entry);
 				}
+				sorted_excerpts = false; // excerpts change here
 			}
-			sorted_excerpts = false;
 			// Print number of entries
 			cout << recents.size() << " log entries appended\n";
 		}
@@ -507,30 +551,26 @@ private:
 	 * Deletes log entry at position a in excerpts, 'd'
 	 * MODIFIES: excerpts
 	 */
-	void delete_log_entry(const int a)
-	{
+	void delete_log_entry(const int a) {
 		// DOES NOT MODIFY sorted_excerpts B/C no change in order
-		if(a < int(excerpts.size()) && a >= 0)
-		{
+		if (a < int(excerpts.size()) && a >= 0) {
 			auto it = excerpts.begin() + a;
 			excerpts.erase(it);
 			cout << "Deleted excerpt list entry " << a << "\n";
 		}
 	}
-
 	/** HELPER
 	 * Moves log entry at position a to beginning, 'b'
 	 * MODIFIES: excerpts, sorted_excerpts
 	 */
-	void move_to_begin(const int a)
-	{
-		if(a < int(excerpts.size()) && a >= 0)
-		{
+	void move_to_begin(const int a) {
+		if(a < int(excerpts.size()) && a >= 0) {
 			auto it = excerpts.begin() + a;
-			int val = *it;
+			unsigned int val = *it;
 			excerpts.erase(it);
 			excerpts.push_front(val); // push to front
 			sorted_excerpts = false;
+			cout << "Moved excerpt list entry " << a << '\n';
 		}
 	}
 	
@@ -538,15 +578,14 @@ private:
 	* Moves log entry at position a to end, 'e'
 	* MODIFIES: excerpts, sorted_excerpts
 	*/
-	void move_to_end(const int a)
-	{
-		if (a < int(excerpts.size()) && a >= 0)
-		{
+	void move_to_end(const int a) {
+		if (a < int(excerpts.size()) && a >= 0) {
 			auto it = excerpts.begin() + a;
-			int val = *it;
+			unsigned int val = *it;
 			excerpts.erase(it);
 			excerpts.push_back(val); // push to end
 			sorted_excerpts = false;
+			cout << "Moved excerpt list entry " << a << '\n';
 		}
 	}
 
@@ -555,11 +594,9 @@ private:
 	 * Sorts excerpt list.
 	 * MODIFIES: excerpts, sorted_excerpts
 	 */
-	void sort_excerpts()
-	{
+	void sort_excerpts() {
 		
-		if(excerpts.empty())
-		{
+		if(excerpts.empty()) {
 			cout << "excerpt list sorted\n(previously empty)\n";
 			sorted_excerpts = true;
 		}
@@ -588,16 +625,13 @@ private:
 	 * Clears excerpt list
 	 * MODIFIES: excerpts
 	 */
-	void clear_excerpts()
-	{
+	void clear_excerpts() {
 		// If empty
-		if(excerpts.empty())
-		{
+		if(excerpts.empty()) {
 			cout << "excerpt list cleared\n(previously empty)\n";
 		}
 		// If not empty
-		else
-		{
+		else {
 			cout << "excerpt list cleared\nprevious contents:\n";
 			master[excerpts[0]]->print();
 			cout << "...\n";
@@ -609,11 +643,9 @@ private:
 	/** HELPER
 	 * Prints recent search, 'g'
 	 */
-	void print_recents()
-	{
+	void print_recents() {
 		update_recents();
-		for(const int& index : recents)
-		{
+		for(const unsigned int& index : recents) {
 			master[index]->print();
 		}
 	}
@@ -622,10 +654,8 @@ private:
 	 * Prints excerpts, 'p'
 	 * 
 	 */
-	void print_excerpts() const
-	{
-		for(const int& index : excerpts)
-		{
+	void print_excerpts() const {
+		for(const unsigned int& index : excerpts) {
 			master[index]->print();
 		}
 	}
@@ -634,28 +664,21 @@ public:
 	/** HELPER
 	 * Prints contents of master 
 	 */
-	void print_master() const 
-	{
-		for(int i = 0; i < int(master.size()); ++i)
-		{
-			cout << master[i]->id << " " << master[i]->ts << 
-				" " << master[i]->cat << " " << master[i]->msg << "\n";
+	void print_master() const {
+		for(int i = 0; i < int(master.size()); ++i) {
+			master[i]->print();
 		}
 	}
 	
 	// HELPER
-	void test_conversion()
-	{
-		for (int id = 0; id < int(master.size()); ++id)
-		{
-			cout << master[id_to_index[id]]->id << " " << master[id_to_index[id]]->ts << 
-				" " << master[id_to_index[id]]->cat << " " << master[id_to_index[id]]->msg << "\n";
+	void test_conversion() {
+		for (int id = 0; id < int(master.size()); ++id) {
+			master[id_to_index[id]]->print();
 		}
 	}
 };
 
-int main(int argc, char* argv[])
-{
+int main(int argc, char* argv[]) {
 	std::ios_base::sync_with_stdio(false);
 
 	Logger log;
