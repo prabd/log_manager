@@ -42,12 +42,10 @@ struct Entry {
 
 
 // Helper function to convert from mm:dd:hh:mm:ss to a value
-long long int timeToNum(std::string &ts)
-{
+long long int timeToNum(std::string &ts) {
 	std::istringstream input_str(ts);
 	std::string str;
-	for(int i = 0; i < 4; ++i)
-	{
+	for(int i = 0; i < 4; ++i) {
 		std::string s;
 		std::getline(input_str, s, ':');
 		str += s;
@@ -59,8 +57,7 @@ long long int timeToNum(std::string &ts)
 }
 
 // Helper function to convert string to lower case
-void toLower(std::string &s)
-{
+void toLower(std::string &s) {
 	// Transform
 	std::transform(s.begin(), s.end(), s.begin(), ::tolower);
 }
@@ -69,17 +66,13 @@ void toLower(std::string &s)
  * Function converts a given string into an alphanumeric string
  * Returns a vector of split words, transformed to lowercase
  */
-void convert_alnum(const std::string &s, std::vector<std::string> &vec)
-{
+void convert_alnum(const std::string &s, std::vector<std::string> &vec) {
 	std::string word;
-	for(char c : s)
-	{
+	for(char c : s) {
 		// If not alphanumeric
-		if(!isalnum(c))
-		{
+		if(!isalnum(c)) {
 			// If word is not empty, append to vec
-			if(word.length() > 0)
-			{
+			if(!word.empty()) {
 				toLower(word); // convert to lower case
 				vec.push_back(word);
 			}
@@ -87,14 +80,12 @@ void convert_alnum(const std::string &s, std::vector<std::string> &vec)
 			word.clear();
 		}
 		// If alphanumeric, append character to word
-		else
-		{
+		else {
 			word += c;
 		}
 	}
 	// append last word if it exists
-	if(!word.empty())
-	{
+	if(!word.empty()) {
 		toLower(word);
 		vec.push_back(word);
 	}
@@ -103,8 +94,7 @@ void convert_alnum(const std::string &s, std::vector<std::string> &vec)
 /**
  * Predicate for case insensitivity
  */
-class stringPred
-{
+class stringPred {
 public:
 	bool operator()(const std::string &lhs, const std::string &rhs) const {
 		return strcasecmp(lhs.c_str(), rhs.c_str()) == 0;
@@ -114,36 +104,28 @@ public:
 /**
  * Custom Less to sort entries
  */
-class EntryLess
-{
+class EntryLess {
 public:
 	// Compares by timestamp, category, then ID
 	// Entry is less if timestamp is less, cat is less, entry id is less
-	bool operator()(const Entry* lhs, const Entry* rhs) const
-	{
-		if(lhs->time < rhs-> time)
-		{
+	bool operator()(const Entry* lhs, const Entry* rhs) const {
+		if(lhs->time < rhs-> time) {
 			return true;
 		}
-		else if(lhs->time > rhs->time)
-		{
+		else if(lhs->time > rhs->time) {
 			return false;
 		}
 		// If timestamps are equal
-		else
-		{
+		else {
 			int val = strcasecmp(lhs->cat.c_str(), rhs->cat.c_str());
-			if(val < 0)
-			{
+			if(val < 0) {
 				return true;
 			}
-			else if(val > 0)
-			{
+			else if(val > 0) {
 				return false;
 			}
 			// If cats are equal
-			else
-			{
+			else {
 				return lhs->id < rhs->id;
 			}
 		}
@@ -156,16 +138,14 @@ public:
 class EntryTimeLessUpper
 {
 public:
-	bool operator()(long long int val, Entry* rhs) const
-	{
+	bool operator()(long long int val, Entry* rhs) const {
 		return val < rhs->time;
 	}
 };
 class EntryTimeLessLower
 {
 public:
-	bool operator()(Entry* lhs, long long int val) const
-	{
+	bool operator()(Entry* lhs, long long int val) const {
 		return lhs->time < val;
 	}
 };
@@ -173,8 +153,7 @@ public:
 /**
  * Main structure, used to organize functions
  */
-class Logger
-{
+class Logger {
 	
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
@@ -339,14 +318,10 @@ public:
 				t1.erase(0, 1);
 				getline(cin, t2);
 				// Error checking
-				if(t1.length() != 14 || t2.length() != 15)
+				if(t1.size() != 14 || t2.size() != 14)
 				{
 					
 					std::cerr << "Input formatted wrong\n";
-					std::cerr << t1.length() << std::endl;
-					std::cerr << t1 << std::endl;
-					std::cerr << t2.length() << std::endl;
-					std::cerr << t2 << std::endl;
 					
 				}
 				else {
