@@ -1,0 +1,20 @@
+# Tests empty sort, clear, print recents, and print excerpts
+s
+l
+p
+g
+a 0
+a 1
+a 13
+p
+s
+p
+l
+# empty search
+c yo
+g
+p
+# non-empty search a
+c THREAD
+g
+q

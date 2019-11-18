@@ -1,59 +1,20 @@
-# Tests Excerpt append entry, append search results, sort.
-# n
-# n
-# Check empty sort
+# tests sorting conventions
+a 1
 s
-# check empty clear statement
-c
-# check non-empty clear
 a 0
-c
-# check out of bounds entry append
-a 18
-# check successful append
-a 10
 p
-# test no previous search result append
-r
-# Search for non existent time
-m 04:25:21:55:51
-# test empty result append
-r
-# Search for existing time
-m 04:25:21:55:36
-g
-# test non-empty result append
-r
+s
 p
-# Move first to beginning
-b 0
+a 4
+b 2
 p
-# Move second to beginning
-b 1
+s
 p
-# Move last to beginning
+a 5
 b 3
+s
 p
-# Move invalid index to beginning
+a 5
 b 4
-b 0 
-p
-# sort non-empty
 s
-s
-# delete entry at position 0
-d 0
-p
-# delete invalid index
-d 3
-# delete last index
-d 2
-p
-# test clear
-l
-p
-# test multiple appends after 1 search
-r
-r
-p
 q

@@ -1,0 +1,20 @@
+# tests t and m commands
+# malformed input
+t 07:02:10:12:43|07:02:10:13
+# test bound inclusion
+t 01:07:08:12:00|04:25:21:55:36
+g
+# test lower bound within range, upper bound outside range
+t 04:25:21:55:36|12:15:20:56:55
+g
+# test lower and upper outside range
+t 12:15:20:56:55|12:15:20:56:55
+g
+# Test m command
+m 12:15:20:56:55
+g
+m 04:25:21:55:36
+g 
+m 00:07:08:12:00
+g
+q

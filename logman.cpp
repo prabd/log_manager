@@ -158,7 +158,7 @@ class Logger {
 	std::string logfile; // stores filename
 	std::vector<Entry*> master;
 	std::vector<unsigned int> id_to_index; // stores where an entryID can be found in master
-	std::unordered_map < std::string, std::vector<unsigned int>> cats; // unordered map of categories to entries
+	std::unordered_map<std::string, std::vector<unsigned int>> cats; // unordered map of categories to entries
 	std::unordered_map<std::string, std::vector<unsigned int>> keywords;
 	std::deque<unsigned int> excerpts; // stores indices to master
 	std::vector<unsigned int> recents;
@@ -172,6 +172,7 @@ class Logger {
 	bool sorted_excerpts = false; // flag to see if excerpts were sorted already
 	bool clear_recents = false; // Flag to clear recents
 	std::string prev_key_search;
+	
 public:
 	/**
 	 * Custom Dtor, prevent memory leaks
@@ -315,23 +316,10 @@ public:
 				std::string all;
 				cin >> all;
 				std::string t1, t2;
-				//getline(cin, t1, '|');
-				// Strip leading space from t1
-				//t1.erase(0, 1);
-				//getline(cin, t2);
+
 				if(all[14] != '|' || all.size() != 29) {
 					std::cerr << "Input formatted wrong\n";
 				}
-				// Error checking
-				/*if(t1.size() != 14 || t2.size() != 14)
-				{
-					
-					std::cerr << "Input formatted wrong\n";
-					std::cerr << t1.size() << " " << t2.size() << "\n";
-					std::cerr << t1 << " " << t2 << "\n";
-					
-				}
-				*/
 				else {
 					t1 = all.substr(0, 14);
 					t2 = all.substr(15, 14);
@@ -398,7 +386,6 @@ public:
 			}
 			else if(cmd == 'l')
 			{
-				//clear_excerpts();
 				// If empty
 				if (excerpts.empty()) {
 					cout << "excerpt list cleared\n(previously empty)\n";
@@ -413,7 +400,7 @@ public:
 
 					cout << excerpts.size() - 1 << '|';
 					master[excerpts[excerpts.size() - 1]]->print();
-					excerpts.resize(0);
+					excerpts.clear();
 				}
 			}
 			else if(cmd == 'g')
@@ -683,30 +670,6 @@ private:
 			master[excerpts[excerpts.size() - 1]]->print();
 		}
 	}
-
-	/** HELPER
-	 * Clears excerpt list
-	 * MODIFIES: excerpts
-	 */
-	void clear_excerpts() {
-		// If empty
-		if(excerpts.empty()) {
-			cout << "excerpt list cleared\n(previously empty)\n";
-		}
-		// If not empty
-		else {
-			cout << "excerpt list cleared\nprevious contents:\n";
-			cout << '0' << "|";
-			master[excerpts[0]]->print();
-	
-			cout << "...\n";
-
-			cout << excerpts.size() - 1;
-			master[excerpts[excerpts.size() - 1]]->print();
-			excerpts.resize(0);
-		}
-		
-	}
 	
 	/** HELPER
 	 * Prints recent search, 'g'
@@ -728,23 +691,7 @@ private:
 			master[excerpts[index]]->print();
 		}
 	}
-	
-public:	
-	/** HELPER
-	 * Prints contents of master 
-	 */
-	void print_master() const {
-		for(int i = 0; i < int(master.size()); ++i) {
-			master[i]->print();
-		}
-	}
-	
-	// HELPER
-	void test_conversion() {
-		for (int id = 0; id < int(master.size()); ++id) {
-			master[id_to_index[id]]->print();
-		}
-	}
+
 };
 
 int main(int argc, char* argv[]) {
@@ -753,8 +700,6 @@ int main(int argc, char* argv[]) {
 	Logger log;
 	log.read_cmd(argc, argv);
 	log.read_logfile();
-	//log.print_master();
-	//log.test_conversion();
 	log.create_maps();
 	log.read_commands();
 	return 0;
