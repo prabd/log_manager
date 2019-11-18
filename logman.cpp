@@ -32,7 +32,7 @@ struct Entry {
 	std::string msg;
 
 	// Ctor
-	Entry(const unsigned int i,const std::string &ti, const long long int t, const std::string c, const std::string m)
+	Entry(const unsigned int & i, const std::string &ti, const long long int & t, const std::string & c, const std::string & m)
 		: id{ i }, ts{ ti }, time{ t }, cat{ c }, msg{ m } {}
 
 	void print() {
@@ -312,19 +312,29 @@ public:
 			// Time range search
 			if(cmd == 't')
 			{
+				std::string all;
+				cin >> all;
 				std::string t1, t2;
-				getline(cin, t1, '|');
+				//getline(cin, t1, '|');
 				// Strip leading space from t1
-				t1.erase(0, 1);
-				getline(cin, t2);
+				//t1.erase(0, 1);
+				//getline(cin, t2);
+				if(all[14] != '|' || all.size() != 29) {
+					std::cerr << "Input formatted wrong\n";
+				}
 				// Error checking
-				if(t1.size() != 14 || t2.size() != 14)
+				/*if(t1.size() != 14 || t2.size() != 14)
 				{
 					
 					std::cerr << "Input formatted wrong\n";
+					std::cerr << t1.size() << " " << t2.size() << "\n";
+					std::cerr << t1 << " " << t2 << "\n";
 					
 				}
+				*/
 				else {
+					t1 = all.substr(0, 14);
+					t2 = all.substr(15, 14);
 					int num = time_search_range(t1, t2);
 					cout << "Timestamps search: " << num << " entries found\n";
 				}
@@ -389,7 +399,7 @@ public:
 			else if(cmd == 'l')
 			{
 				//clear_excerpts();
-						// If empty
+				// If empty
 				if (excerpts.empty()) {
 					cout << "excerpt list cleared\n(previously empty)\n";
 				}

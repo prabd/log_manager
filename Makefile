@@ -12,8 +12,8 @@
 # IMPORTANT NOTES:
 #   1. Set EXECUTABLE to the command name from the project specification.
 #   2. To enable automatic creation of unit test rules, your program logic
-#      (where main() is) should be in a file named project*.cpp or specified in
-#      the PROJECTFILE variable.
+#      (where main() is) should be in a file named project*.cpp or
+#      specified in the PROJECTFILE variable.
 #   3. Files you want to include in your final submission cannot match the
 #      test*.cpp pattern.
 
@@ -28,9 +28,9 @@ EXECUTABLE  = logman
 
 # The following line looks for a project's main() in files named project*.cpp,
 # executable.cpp (substituted from EXECUTABLE above), or main.cpp
-PROJECTFILE = $(or $(wildcard project*.cpp $(EXECUTABLE).cpp), main.cpp)
+#PROJECTFILE = $(or $(wildcard project*.cpp $(EXECUTABLE).cpp), main.cpp)
 # If main() is in another file delete line above, edit and uncomment below
-#PROJECTFILE = mymainfile.cpp
+PROJECTFILE = logman.cpp
 #######################
 # TODO (end) #
 #######################
@@ -40,8 +40,8 @@ PATH := /usr/um/gcc-6.2.0/bin:$(PATH)
 LD_LIBRARY_PATH := /usr/um/gcc-6.2.0/lib64
 LD_RUN_PATH := /usr/um/gcc-6.2.0/lib64
 
-# This is the path from the CAEN home folder to where projects will be uploaded.
-# (eg. /home/mmdarden/eecs281/project1)
+# This is the path from the CAEN home folder to where projects will be
+# uploaded. (eg. /home/mmdarden/eecs281/project1)
 # Change this if you prefer a different path.
 # REMOTE_BASEDIR := w18/eecs281    # /home/mmdarden/w18/eecs281/project0
 REMOTE_BASEDIR := eecs281
@@ -82,13 +82,12 @@ debug:
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXECUTABLE)_debug
 
 # make profile - will compile "all" with $(CXXFLAGS) and the -pg flag
-#                also defines PROFILE, so "#ifdef PROFILE" works
-profile: CXXFLAGS += -pg -DPROFILE
+profile: CXXFLAGS += -pg
 profile:
 	$(CXX) $(CXXFLAGS) $(SOURCES) -o $(EXECUTABLE)_profile
 
-# make static - will perform static analysis in the matter currently used on
-#               the autograder
+# make static - will perform static analysis in the matter currently used
+#               on the autograder
 static:
 	cppcheck --enable=all --suppress=missingIncludeSystem \
       $(SOURCES) *.h *.hpp
@@ -143,7 +142,8 @@ clean:
       $(TESTS) $(PARTIAL_SUBMITFILE) $(FULL_SUBMITFILE) $(PERF_FILE)
 	rm -Rf *.dSYM
 
-# make partialsubmit.tar.gz - cleans, creates tarball omitting test files
+# make partialsubmit.tar.gz - cleans, creates tarball
+# omitting test files
 PARTIAL_SUBMITFILES=$(filter-out $(TESTSOURCES), \
                       $(wildcard Makefile *.h *.hpp *.cpp))
 $(PARTIAL_SUBMITFILE): $(PARTIAL_SUBMITFILES)
@@ -152,7 +152,8 @@ $(PARTIAL_SUBMITFILE): $(PARTIAL_SUBMITFILES)
       $(PARTIAL_SUBMITFILES)
 	@echo !!! WARNING: No test files included. Use 'make fullsubmit' to include test files. !!!
 
-# make fullsubmit.tar.gz - cleans, creates tarball including test files
+# make fullsubmit.tar.gz - cleans, runs dos2unix, creates tarball
+# including test files
 FULL_SUBMITFILES=$(filter-out $(TESTSOURCES), \
                    $(wildcard Makefile *.h *.hpp *.cpp test*.txt))
 $(FULL_SUBMITFILE): $(FULL_SUBMITFILES)
@@ -164,17 +165,18 @@ $(FULL_SUBMITFILE): $(FULL_SUBMITFILES)
 partialsubmit: identifier $(PARTIAL_SUBMITFILE)
 fullsubmit: identifier $(FULL_SUBMITFILE)
 
-sync2caen: REMOTE_PATH := ${REMOTE_BASEDIR}/$(notdir $(shell pwd))
+sync2caen: REMOTE_PATH := ${REMOTE_BASEDIR}_${EXECUTABLE}_sync
 sync2caen:
 	# Synchronize local files into target directory on CAEN
 	rsync \
       -av \
-      --delete \
       --exclude '.git*' \
-      --exclude '.vs*' \  
-	  --filter=":- .gitignore" \
-      ./ \
-      "login.engin.umich.edu:'${REMOTE_PATH}'/"
+      --exclude '.vs*' \
+      --exclude '*.code-workspace' \
+      --filter=":- .gitignore" \
+      "."/ \
+      "login.engin.umich.edu:'${REMOTE_PATH}/'"
+	echo "Files synced to CAEN at ~/${REMOTE_PATH}/"
 
 define MAKEFILE_HELP
 EECS281 Advanced Makefile Help
@@ -189,19 +191,21 @@ EECS281 Advanced Makefile Help
     2. Build, test, submit... repeat as necessary.
 
 * Preparing submissions
-    A) To build 'partialsubmit.tar.gz', a tarball without tests used to find
-       buggy solutions in the autograder.
+    A) To build 'partialsubmit.tar.gz', a tarball without tests used to
+       find buggy solutions in the autograder.
 
            *** USE THIS ONLY FOR TESTING YOUR SOLUTION! ***
 
-       This is useful for faster autograder runs during development and free
-       submissions if the project does not build.
+       This is useful for faster autograder runs during development and
+       free submissions if the project does not build.
            $$ make partialsubmit
-    B) Build 'fullsubmit.tar.gz' a tarball complete with autograder test files.
+    B) Build 'fullsubmit.tar.gz' a tarball complete with autograder test
+       files.
 
            *** ALWAYS USE THIS FOR FINAL GRADING! ***
 
-       It is also useful when trying to find buggy solutions in the autograder.
+       It is also useful when trying to find buggy solutions in the
+       autograder.
            $$ make fullsubmit
 
 * Unit testing support
@@ -211,9 +215,10 @@ EECS281 Advanced Makefile Help
            $$ make test_input
            $$ make test3
            $$ make alltests        (this builds all test drivers)
-    C) If test drivers need special dependencies, they must be added manually.
-    D) IMPORTANT: NO SOURCE FILES WITH NAMES THAT BEGIN WITH test WILL BE ADDED
-       TO ANY SUBMISSION TARBALLS.
+    C) If test drivers need special dependencies, they must be added
+       manually.
+    D) IMPORTANT: NO SOURCE FILES WITH NAMES THAT BEGIN WITH test WILL BE
+       ADDED TO ANY SUBMISSION TARBALLS.
 
 * Static Analysis support
     A) Matches current autograder style grading tests
@@ -221,8 +226,8 @@ EECS281 Advanced Makefile Help
            $$ make static
 
 * Sync to CAEN support
-    A) Requires an .ssh/config file with a login.engin.umich.edu host defined,
-       SSH Multiplexing enabled, and an open SSH connection.
+    A) Requires an .ssh/config file with a login.engin.umich.edu host
+       defined, SSH Multiplexing enabled, and an open SSH connection.
     B) Edit the REMOTE_BASEDIR variable if default is not preferred.
     C) Usage:
            $$ make sync2caen
