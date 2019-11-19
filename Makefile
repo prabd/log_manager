@@ -21,7 +21,7 @@
 # TODO (begin) #
 #######################
 # Change IDENTIFIER to match the project identifier given in the project spec.
-IDENTIFIER = C3BF016AD7E8B6F837DF18926EC3E83350
+IDENTIFIER = 01BD41C3BF016AD7E8B6F837DF18926EC3E83350
 
 # Change EXECUTABLE to match the command name given in the project spec.
 EXECUTABLE  = logman
