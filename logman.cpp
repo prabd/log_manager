@@ -171,6 +171,8 @@ class Logger {
 	bool sorted_excerpts = false; // flag to see if excerpts were sorted already
 	bool clear_recents = false; // Flag to clear recents
 	std::string prev_key_search;
+	bool created_category_map = false;
+	bool created_keyword_map = false;
 	
 public:
 	/**
@@ -246,57 +248,7 @@ public:
 		}
 	}
 
-	/** SETUP
-	 * Iterates through sorted master, parses categories and messages
-	 * Hashes maps
-	 */
-	void create_maps()
-	{
-		// Iterate over entries in master
-		for(int i = 0; i < int(master.size()); ++i)
-		{
-			Entry* entry = master[i]; // reference to current entry
-			// Transform category into lower case, then hash
-			std::string cat = entry->cat;
-			// need lowercase for standardized hashing
-			toLower(cat);
-			cats[cat].push_back(i); //push as is
-
-			// Update map for keywords
-			// Split cat into vector of alphanumeric words, convert to lower case
-			std::vector<std::string> cat_split;
-			convert_alnum(cat, cat_split);
-			// Split msg into vector of alphanumeric words, convert to lower case
-			std::string msg = entry->msg;
-			std::vector<std::string> msg_split;
-			convert_alnum(msg, msg_split);
-			// Merge vectors by moving cat split to msg split (cat should be less than msg)
-			msg_split.reserve(msg_split.size() + cat_split.size()); // reserve
-			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split)); // merge into msg
-			
-			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
-			for(const auto& word : msg_split)
-			{
-				// If key does exist
-				if(keywords.find(word) != keywords.end())
-				{
-					auto vec = (keywords[word]);
-					// If previous element in vector is not equal to current entry
-					if (int(keywords[word][keywords[word].size() - 1]) != i)
-					{
-						keywords[word].push_back(i);
-					}
-					// Last entry in vector is same entry, so don't do anything
-				}
-				// Else if key does not exist, simply push back
-				else
-				{
-					keywords[word].push_back(i);
-				}
-			}
-		}
-		
-	}
+	
 
 	/** MAIN
 	 * Process user commands and acts accordingly
@@ -337,6 +289,10 @@ public:
 			}
 			else if(cmd == 'c')
 			{
+				if(!created_category_map) {
+					create_category_map();
+					created_category_map = true;
+				}
 				std::string str;
 				getline(cin, str);
 
@@ -347,6 +303,10 @@ public:
 			}
 			else if(cmd == 'k')
 			{
+				if(!created_keyword_map) {
+					create_keyword_map();
+					created_keyword_map = true;
+				}
 				std::string str;
 				std::getline(cin, str);
 				keyword_search(str);
@@ -421,6 +381,62 @@ public:
 
 private:
 	/*
+	 * Creates category map for the first time
+	 */
+	void create_category_map() {
+		for (int i = 0; i < int(master.size()); ++i)
+		{
+			Entry* entry = master[i]; // reference to current entry
+			// Transform category into lower case, then hash
+			std::string cat = entry->cat;
+			// need lowercase for standardized hashing
+			toLower(cat);
+			cats[cat].push_back(i); //push as is
+		}
+	}
+
+	/*
+	 * Creates keyword map for the first time
+	 */
+	void create_keyword_map() {
+		for (int i = 0; i < int(master.size()); ++i) {
+			Entry* entry = master[i];
+			std::string cat = entry->cat;
+			// Split cat into vector of alphanumeric words, convert to lower case
+			std::vector<std::string> cat_split;
+			convert_alnum(cat, cat_split);
+			// Split msg into vector of alphanumeric words, convert to lower case
+			std::string msg = entry->msg;
+			std::vector<std::string> msg_split;
+			convert_alnum(msg, msg_split);
+			// Merge vectors by moving cat split to msg split (cat should be less than msg)
+			msg_split.reserve(msg_split.size() + cat_split.size()); // reserve
+			std::move(cat_split.begin(), cat_split.end(), std::back_inserter(msg_split)); // merge into msg
+
+			// Hash into table, if vec does not exist, or last element in vec is not current entry, push back
+			for (const auto& word : msg_split)
+			{
+				// If key does exist
+				if (keywords.find(word) != keywords.end())
+				{
+					auto vec = (keywords[word]);
+					// If previous element in vector is not equal to current entry
+					if (int(keywords[word][keywords[word].size() - 1]) != i)
+					{
+						keywords[word].push_back(i);
+					}
+					// Last entry in vector is same entry, so don't do anything
+				}
+				// Else if key does not exist, simply push back
+				else
+				{
+					keywords[word].push_back(i);
+				}
+			}
+		}
+	}
+	
+	/*
 	 * Helper function to update recents based on previous search
 	 * MODIFIES: recents, changed_recents
 	 */
@@ -456,6 +472,7 @@ private:
 			}
 		}
 	}
+
 	/** HELPER
 	 * Helper Function uses lower bound and upper bound to generate search results in recent
 	 * sets changed_recents = true
@@ -477,7 +494,6 @@ private:
 		int num_el = int(it2 - it1);
 		return num_el;
 	}
-
 	
 	/** HELPER
 	 *  Function for category search, 'c'
@@ -551,7 +567,6 @@ private:
 		cout << "Keyword search: " << key_search_vec.size() << " entries found\n";
 	}
 
-	
 	/* HELPER
 	 * Helper function for 'a'
 	 * MODIFIES: excerpts, sorted_excerpts
@@ -600,6 +615,7 @@ private:
 			cout << "Deleted excerpt list entry " << a << "\n";
 		}
 	}
+
 	/** HELPER
 	 * Moves log entry at position a to beginning, 'b'
 	 * MODIFIES: excerpts, sorted_excerpts
@@ -630,7 +646,6 @@ private:
 		}
 	}
 
-	// TODO: OPTIMIZE
 	/** HELPER
 	 * Sorts excerpt list.
 	 * MODIFIES: excerpts, sorted_excerpts
@@ -655,7 +670,8 @@ private:
 			// Since the integers in excerpts refer to the sorted indices of the master,
 			// we only have to sort the values in excerpts.
 			if (!sorted_excerpts) {
-				std::sort(excerpts.begin(), excerpts.end());
+				//std::sort(excerpts.begin(), excerpts.end());
+				count_sort(); // custom sort
 				sorted_excerpts = true;
 			}
 			
@@ -691,6 +707,40 @@ private:
 		}
 	}
 
+	/*
+	 * Implementation of counting sort for better speed
+	 */
+	void count_sort() {
+		// Find range of indices
+		unsigned int max = *std::max_element(excerpts.begin(), excerpts.end());
+		unsigned int min = *std::min_element(excerpts.begin(), excerpts.end());
+
+		// Create vector of counts
+		std::vector<unsigned int> counts(max - min + 1, 0);
+
+		// Store counts
+		for(unsigned int index : excerpts) {
+			++counts[index - min]; // shift by min
+		}
+		// sum counts at each index
+		for(unsigned int i = 1; i < counts.size(); ++i) {
+			counts[i] += counts[i - 1];
+		}
+		// Update out vector (copy into deque later)
+		std::vector<unsigned int> out(excerpts.size(), 0);
+		for(int i = int(excerpts.size()) - 1; i >= 0; --i) {
+			out[counts[excerpts[i] - min] - 1] = excerpts[i];
+			// Decrease count
+			--counts[excerpts[i] - min];
+		}
+
+		// copy out vector into excerpts deque
+		for(unsigned int i = 0; i < excerpts.size(); ++i) {
+			excerpts[i] = out[i];
+		}
+		
+	}
+
 };
 
 int main(int argc, char* argv[]) {
@@ -699,7 +749,7 @@ int main(int argc, char* argv[]) {
 	Logger log;
 	log.read_cmd(argc, argv);
 	log.read_logfile();
-	log.create_maps();
+	//log.create_maps();
 	log.read_commands();
 	return 0;
 }
