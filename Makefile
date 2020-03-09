@@ -165,7 +165,7 @@ $(FULL_SUBMITFILE): $(FULL_SUBMITFILES)
 partialsubmit: identifier $(PARTIAL_SUBMITFILE)
 fullsubmit: identifier $(FULL_SUBMITFILE)
 
-sync2caen: REMOTE_PATH := ${REMOTE_BASEDIR}_${EXECUTABLE}_sync
+sync2caen: REMOTE_PATH := ${REMOTE_BASEDIR}/${EXECUTABLE}_sync
 sync2caen:
 	# Synchronize local files into target directory on CAEN
 	rsync \

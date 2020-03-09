@@ -458,6 +458,7 @@ private:
 				temp.resize(num_el, 0);
 				std::iota(temp.begin(), temp.end(), index1);
 				recents.swap(temp); // vector swap
+				temp.clear();
 			}
 			// was a category or keyword search
 			else if (search_type == 'c') {
@@ -469,6 +470,7 @@ private:
 			else if (search_type == 'k') {
 				changed_recents = false;
 				recents.swap(key_search_vec);
+				key_search_vec.clear();
 			}
 		}
 	}
