@@ -6,7 +6,7 @@
 <!-- PROJECT LOGO -->
 <br />
 <p align="center">
-  <a href="https://github.com/othneildrew/Best-README-Template">
+  <a href="https://github.com/prabd/log_manager">
     <img src="images/logo.png" alt="Logo" width="80" height="80">
   </a>
 </p>
@@ -95,13 +95,13 @@ make
 
 ### Help
 ```sh 
-manager -h
-manager --help
+./manager -h
+./manager --help
 ```
 
 ### Starting the Manager
 ```sh
-manager path/to/LOGFILE
+./manager path/to/LOGFILE
 ```
 
 ### User Commands
@@ -166,12 +166,12 @@ Other:
 
 To run tests or samples you can run:
 ```sh
-manager LOGFILE < commands.in > output.out
+./manager LOGFILE < commands.in > output.out
 ```
 
 ### Interactive Example
 ```sh
-manager samples/sample-log.txt
+./manager samples/sample-log.txt
 k persevere
 g
 r
@@ -180,7 +180,7 @@ l
 
 ### Input/Output Redirection Example
 ```sh
-manager samples/sample-log.txt < samples/sample-all-cmds.txt > output.txt
+./manager samples/sample-log.txt < samples/sample-all-cmds.txt > output.txt
 ```
 
 <!-- ROADMAP -->
@@ -206,8 +206,8 @@ Project Link: [https://github.com/prabd/log_manager](https://github.com/prabd/lo
 
 <!-- MARKDOWN LINKS & IMAGES -->
 <!-- https://www.markdownguide.org/basic-syntax/#reference-style-links -->
-[contributors-shield]: https://img.shields.io/github/contributors/othneildrew/Best-README-Template.svg?style=flat-square
-[contributors-url]: https://github.com/prabd/log_manager/graphs/contributors
+[contributors-shield]: https://img.shields.io/badge/contributors-1-green.svg
+[contributors-url]: https://shields.io/
 [license-shield]: https://img.shields.io/github/license/othneildrew/Best-README-Template.svg?style=flat-square
 [license-url]: https://github.com/prabd/log_manager
 [linkedin-shield]: https://img.shields.io/badge/-LinkedIn-black.svg?style=flat-square&logo=linkedin&colorB=555
