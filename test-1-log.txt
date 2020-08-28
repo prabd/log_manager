@@ -1,6 +1,0 @@
-00:00:00:00:01|a b|Bad packet received (CID #8432)
-00:00:00:00:01|a c|Window received focus.
-00:00:00:00:01|a|Suspending CPU 3 ui
-00:00:00:00:03|b|Bad packet received (CID #12353)
-00:00:00:00:01|a b|Sending query: "SELECT * FROM users"
-00:00:00:00:04|d|Window received focus.

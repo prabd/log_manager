@@ -1,0 +1,20 @@
+# Test append search results
+r
+k joe mama
+r
+k threAD###
+r
+d 6
+p
+r
+p
+l
+r
+p
+c thread#
+r
+p
+c thread
+r
+p
+q

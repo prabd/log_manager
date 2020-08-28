@@ -1,0 +1,14 @@
+# Tests keyword search
+# Multiple appearances/case insensitivity
+k db query for
+k thread#
+g
+k tcP# bad-packet 
+g
+k uipane1
+g
+k ui pane
+g
+k thread thREAd THREAD#-thread#
+g
+q
